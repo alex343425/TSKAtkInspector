@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../src/Presentation.cs" Link="Presentation.cs" />
+    <Compile Include="../src/BuffMath.cs" Link="BuffMath.cs" />
+    <Compile Include="../src/EnemyDebuffMath.cs" Link="EnemyDebuffMath.cs" />
+    <Compile Include="../src/TimelineCtMath.cs" Link="TimelineCtMath.cs" />
+    <Compile Include="../src/SourceIdentity.cs" Link="SourceIdentity.cs" />
+    <Reference Include="Mono.Cecil"><HintPath>../../../BepInEx/core/Mono.Cecil.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

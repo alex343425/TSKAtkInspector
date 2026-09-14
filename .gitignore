@@ -1,0 +1,13 @@
+bin/
+obj/
+.build-home/
+backups/
+dist/
+.vs/
+.idea/
+*.user
+tools/**/bin/
+tools/**/obj/
+tests/**/bin/
+tests/**/obj/
+/*.txt
