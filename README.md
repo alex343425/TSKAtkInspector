@@ -1,3 +1,7 @@
+![戰鬥畫面功能總覽](images/1.png)
+
+![ATK 加成明細](images/2.png)
+
 # 戰鬥 ATK／爆擊傷害／敵方 DEBUFF 明細
 
 《ティンクルスターナイツ》用的非官方 BepInEx 6 IL2CPP 插件，搭配 [TSKHook](https://github.com/TSKModding/TSKHook) 使用。
