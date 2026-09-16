@@ -10,6 +10,17 @@ public static class Presentation
     public static string RatePercent(long basisPoints) => (basisPoints / 100d).ToString("0.##", CultureInfo.InvariantCulture) + "%";
     public static string InlineCriticalSummary(long criticalRate, long criticalDamageRate) =>
         $"Cri {RatePercent(criticalRate)} CriDmg {RatePercent(criticalDamageRate)}";
+    public static string InlineExGaugeSummary(int baseRate, int battleRate, int normalGain,
+        int chargeGain, bool hasBattleRateEffect, bool isCharge)
+    {
+        string rate = $"EX上昇 {baseRate}" +
+            (hasBattleRateEffect ? $" ({battleRate} / {ExGaugeMath.BattleRateCap})" : "");
+        string normal = isCharge ? normalGain.ToString(CultureInfo.InvariantCulture) :
+            $"<color=#65FFE0><b>{normalGain}</b></color>";
+        string charge = isCharge ? $"<color=#65FFE0><b>{chargeGain}</b></color>" :
+            chargeGain.ToString(CultureInfo.InvariantCulture);
+        return $"{rate} - 通常 {normal} - Charge {charge}";
+    }
     public static string ProductPercent(long firstRate, long secondRate) =>
         (firstRate * (double)secondRate / 1_000_000d).ToString("0.##", CultureInfo.InvariantCulture) + "%";
     public static string EnemyDamageBadge(long eRate, long fRate) =>

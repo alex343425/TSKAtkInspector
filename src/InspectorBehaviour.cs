@@ -17,10 +17,13 @@ public sealed class InspectorBehaviour : MonoBehaviour
     private GameObject? _canvasObject;
     private GameObject? _hitObject;
     private GameObject? _criticalHudObject;
+    private GameObject? _exGaugeHudObject;
     private IntPtr _hitText;
     private UnityAction? _hitAction;
     private Font? _font;
     private Text? _criticalHudText;
+    private Text? _exGaugeHudText;
+    private IntPtr _exGaugeValueText;
     private Text? _title, _summary, _details, _modeLabel, _hint, _enemyTargetTitle;
     private Image? _attackTabImage, _criticalTabImage, _enemyTabImage;
     private RectTransform? _content;
@@ -54,9 +57,13 @@ public sealed class InspectorBehaviour : MonoBehaviour
         _instance.Close();
         if (_instance._hitObject != null) Object.Destroy(_instance._hitObject);
         if (_instance._criticalHudObject != null) Object.Destroy(_instance._criticalHudObject);
+        if (_instance._exGaugeHudObject != null) Object.Destroy(_instance._exGaugeHudObject);
         _instance._hitObject = null;
         _instance._criticalHudObject = null;
+        _instance._exGaugeHudObject = null;
         _instance._criticalHudText = null;
+        _instance._exGaugeHudText = null;
+        _instance._exGaugeValueText = IntPtr.Zero;
         _instance._hitText = IntPtr.Zero;
         _instance._hitAction = null;
         _instance._hudRefreshAt = 0;
@@ -72,10 +79,12 @@ public sealed class InspectorBehaviour : MonoBehaviour
             {
                 _leader = _observed;
                 EnsureHitTarget();
+                EnsureExGaugeHud();
             }
             if (_leader != null && _leader.noteData != null && Time.unscaledTime >= _hudRefreshAt)
             {
                 if (LeaderVisible()) RefreshInlineCriticalDamage();
+                RefreshInlineExGauge();
                 _enemyDamageHud.Refresh(_leader.noteData);
                 _hudRefreshAt = Time.unscaledTime + .25f;
             }
@@ -183,6 +192,61 @@ public sealed class InspectorBehaviour : MonoBehaviour
         var note = _leader!.noteData;
         _criticalHudText.text = Presentation.InlineCriticalSummary(
             note.GetCritical(), BattleReader.CurrentCriticalDamage(note));
+    }
+
+    [HideFromIl2Cpp]
+    private void EnsureExGaugeHud()
+    {
+        var note = _leader?.noteData;
+        var exValueText = note?.Team?.teamView?.compEx?.exValueText;
+        if (exValueText == null) return;
+        if (_exGaugeHudObject != null && _exGaugeValueText == exValueText.Pointer) return;
+        if (_exGaugeHudObject != null) Object.Destroy(_exGaugeHudObject);
+
+        var rt = Rect("ATK Inspector EX Gain", exValueText.rectTransform);
+        rt.anchorMin = rt.anchorMax = new Vector2(.5f, 1);
+        rt.pivot = new Vector2(.5f, 0);
+        rt.anchoredPosition = new Vector2(0, 6);
+        rt.sizeDelta = new Vector2(560, 36);
+        var background = rt.gameObject.AddComponent<Image>();
+        background.color = new Color(.015f, .02f, .035f, .9f);
+        background.raycastTarget = false;
+
+        var labelRt = Rect("Label", rt);
+        Fill(labelRt);
+        labelRt.offsetMin = new Vector2(10, 2);
+        labelRt.offsetMax = new Vector2(-10, -2);
+        var label = labelRt.gameObject.AddComponent<Text>();
+        label.font = exValueText.font;
+        label.fontSize = Mathf.Max(15, Mathf.RoundToInt(exValueText.fontSize * .62f));
+        label.fontStyle = FontStyle.Bold;
+        label.color = Color.white;
+        label.alignment = TextAnchor.MiddleCenter;
+        label.supportRichText = true;
+        label.horizontalOverflow = HorizontalWrapMode.Overflow;
+        label.verticalOverflow = VerticalWrapMode.Overflow;
+        label.raycastTarget = false;
+        label.text = "EX上昇 0 - 通常 27 - Charge 34";
+
+        var outline = labelRt.gameObject.AddComponent<Outline>();
+        outline.effectColor = new Color(0, 0, 0, .95f);
+        outline.effectDistance = new Vector2(1.25f, -1.25f);
+        outline.useGraphicAlpha = true;
+
+        _exGaugeHudObject = rt.gameObject;
+        _exGaugeHudText = label;
+        _exGaugeValueText = exValueText.Pointer;
+        RefreshInlineExGauge();
+    }
+
+    [HideFromIl2Cpp]
+    private void RefreshInlineExGauge()
+    {
+        if (_exGaugeHudText == null || _leader?.noteData == null) return;
+        var status = BattleReader.CurrentExGauge(_leader.noteData);
+        _exGaugeHudText.text = Presentation.InlineExGaugeSummary(status.BaseRate,
+            status.BattleRate, status.NormalGain, status.ChargeGain,
+            status.HasBattleRateEffect, status.IsCharge);
     }
 
     [HideFromIl2Cpp]
@@ -479,6 +543,7 @@ public sealed class InspectorBehaviour : MonoBehaviour
         if (_canvasObject != null) Object.Destroy(_canvasObject);
         if (_hitObject != null) Object.Destroy(_hitObject);
         if (_criticalHudObject != null) Object.Destroy(_criticalHudObject);
+        if (_exGaugeHudObject != null) Object.Destroy(_exGaugeHudObject);
         _enemyDamageHud.Clear();
         if (_font != null) Object.Destroy(_font);
         _instance = null;

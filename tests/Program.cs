@@ -59,6 +59,35 @@ Check(TimelineCtMath.EnemyDamageBadgeBelow(24),
     "enemy damage badge stays below for off-screen enemies");
 Check(Presentation.InlineCriticalSummary(8000, 20000) == "Cri 80% CriDmg 200%",
     "standby critical summary shows chance before damage");
+Check(ExGaugeMath.BattleRateValue("ExRateUp", 80, 999) == 80,
+    "ordinary EX rate buff uses SkillValue1 like the native calculation");
+Check(ExGaugeMath.BattleRateValue("ExRateDown", 30, 999) == -30,
+    "EX rate reduction subtracts SkillValue1");
+foreach (var name in new[] { "ExRateUpAllyCount", "ExRateUpAttrOut", "ExRateUpSkillCount", "ExRateUpAllyBit" })
+    Check(ExGaugeMath.BattleRateValue(name, 1, 75) == 75,
+        "conditional EX rate uses the live effective value: " + name);
+Check(ExGaugeMath.BattleRateValue("ExRateUpSpecific", 60, 999) == 60,
+    "specific EX rate buff uses SkillValue1");
+Check(ExGaugeMath.BattleRateValue("AtkUp", 100, 100) == 0,
+    "unrelated effects do not change EX rate");
+Check(ExGaugeMath.AppliedBattleRate(450) == 300,
+    "battle EX rate modifier respects the native 300 cap");
+Check(ExGaugeMath.AppliedBattleRate(-40) == -40,
+    "battle EX rate reduction is retained before the total floor");
+Check(ExGaugeMath.CurrentRate(30, -80) == 0,
+    "current EX rate cannot become negative");
+Check(ExGaugeMath.Gain(0, false) == 27 && ExGaugeMath.Gain(0, true) == 34,
+    "base normal and Charge EX gains round upward");
+Check(ExGaugeMath.Gain(100, false) == 54 && ExGaugeMath.Gain(100, true) == 67,
+    "boosted normal and Charge EX gains round upward");
+Check(!Presentation.InlineExGaugeSummary(100, 0, 54, 67, false, false).Contains("/ 300"),
+    "EX HUD omits the battle modifier when no effect is active");
+Check(Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("EX上昇 100 (80 / 300)") &&
+      Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("<b>75</b>") &&
+      !Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("<b>94</b>"),
+    "normal EX gain is highlighted while the actor is not charging");
+Check(Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, true).Contains("<b>94</b>"),
+    "Charge EX gain is highlighted while the actor is charging");
 foreach (var name in new[] { "Target", "Purgatory", "Collapse", "Stigmata", "ExtremelyCold", "DemonicHindrance",
     "Electrification", "Crushing", "Laceration", "ReserveDark", "Domination", "Refereeing", "Chaos" })
     Check(EnemyDebuffMath.IsNamedDebuff(name), "named debuff category includes " + name);
@@ -104,7 +133,7 @@ foreach (var instruction in method.Body.Instructions)
 {
     if (instruction.Operand is not MethodReference called || called.DeclaringType.Scope.Name != "Assembly-CSharp") continue;
     if (!seenCalls.Add(called.FullName)) continue;
-    var allowed = called.Name.StartsWith("get_") || new[] { "GetBaseAttack", "GetAttack", "GetAtkUpSkillEffect", "GetModeChangeEffect", "GetFieldEffect", "GetSkillEffect", "GetCritical", "CheckRace" }.Contains(called.Name);
+    var allowed = called.Name.StartsWith("get_") || new[] { "GetBaseAttack", "GetBaseExGaugeRate", "GetAttack", "GetAtkUpSkillEffect", "GetModeChangeEffect", "GetFieldEffect", "GetSkillEffect", "GetCritical", "CheckRace" }.Contains(called.Name);
     Check(allowed, "game data read-only: " + called.DeclaringType.Name + "." + called.Name);
     var targetType = game.GetType(called.DeclaringType.GetElementType().FullName);
     Check(targetType != null && targetType.Methods.Any(m => m.Name == called.Name && m.Parameters.Count == called.Parameters.Count), "installed game contains " + called.DeclaringType.Name + "." + called.Name);
@@ -119,6 +148,10 @@ foreach (var name in new[] { "CriticalDamageUp", "CriticalDamageUpSister", "Sist
     "CriticalDamageUpDesignateSkill", "CriticalDamageUpRushRate", "CriticalDamageUpAttributeOrAttackType" })
     Check(skillType != null && skillType.Fields.Any(f => f.Name == name && f.HasConstant),
         "installed game contains critical damage effect " + name);
+foreach (var name in new[] { "ExRateUp", "ExRateDown", "ExRateUpAllyCount", "ExRateUpAttrOut",
+    "ExRateUpSkillCount", "ExRateUpSpecific", "ExRateUpAllyBit" })
+    Check(skillType != null && skillType.Fields.Any(f => f.Name == name && f.HasConstant) && ExGaugeMath.IsBattleRateEffect(name),
+        "installed battle EX rate effect is covered: " + name);
 var nativeCriticalNames = skillType!.Fields.Where(f => f.HasConstant && f.Name.Contains("CriticalDamageUp") && !f.Name.Contains("Down"))
     .Select(f => f.Name).ToArray();
 Check(nativeCriticalNames.Length == 17, "all 17 current native critical damage effect types were enumerated");

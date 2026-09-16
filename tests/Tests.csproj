@@ -5,6 +5,7 @@
     <Compile Include="../src/BuffMath.cs" Link="BuffMath.cs" />
     <Compile Include="../src/EnemyDebuffMath.cs" Link="EnemyDebuffMath.cs" />
     <Compile Include="../src/TimelineCtMath.cs" Link="TimelineCtMath.cs" />
+    <Compile Include="../src/ExGaugeMath.cs" Link="ExGaugeMath.cs" />
     <Compile Include="../src/SourceIdentity.cs" Link="SourceIdentity.cs" />
     <Reference Include="Mono.Cecil"><HintPath>../../../BepInEx/core/Mono.Cecil.dll</HintPath></Reference>
   </ItemGroup>

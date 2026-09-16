@@ -9,6 +9,9 @@ internal readonly record struct EnemyDamageRates(
     long IncreaseRate, long ReductionRate, long ERate, long NamedRate, long FRate,
     int Attribute, int AttackKind, bool Human, bool Deity, bool Demon,
     int CollapseCount, int DominationLevel, int NamedCount, int ApplicableNamedCount);
+internal readonly record struct ExGaugeStatus(
+    int BaseRate, int BattleRate, int CurrentRate, int NormalGain, int ChargeGain,
+    bool HasBattleRateEffect, bool IsCharge);
 
 internal static class BattleReader
 {
@@ -46,6 +49,29 @@ internal static class BattleReader
                 effect.SkillValue1, effect.SkillValue2, effect.SkillValue3, rush);
         }
         return rate;
+    }
+
+    internal static ExGaugeStatus CurrentExGauge(TSKBattleNote note)
+    {
+        int baseRate = note.GetBaseExGaugeRate();
+        long rawBattleRate = 0;
+        bool hasBattleRateEffect = false;
+        var effects = note.SkillEffectList;
+        if (effects != null) for (int i = 0; i < effects.Count; i++)
+        {
+            var effect = effects[i];
+            string typeName = effect.Type.ToString();
+            if (!ExGaugeMath.IsBattleRateEffect(typeName)) continue;
+            hasBattleRateEffect = true;
+            rawBattleRate += ExGaugeMath.BattleRateValue(typeName,
+                effect.SkillValue1, effect.SkillEffectValue);
+        }
+
+        int battleRate = ExGaugeMath.AppliedBattleRate(rawBattleRate);
+        int currentRate = ExGaugeMath.CurrentRate(baseRate, battleRate);
+        return new ExGaugeStatus(baseRate, battleRate, currentRate,
+            ExGaugeMath.Gain(currentRate, false), ExGaugeMath.Gain(currentRate, true),
+            hasBattleRateEffect, note.isCharge || note.isSuperCharge);
     }
 
     internal static EnemyDamageRates CurrentEnemyDamageRates(TSKBattleNote attacker, TSKBattleNote target)

@@ -19,6 +19,30 @@ for (var i = 0; i < count; i++) {
 using var stream = File.OpenRead(Path.Combine(root, "GameAssembly.dll"));
 using var pe = new PEReader(stream);
 var baseAddress = pe.PEHeaders.PEHeader.ImageBase;
+foreach (var argument in args.Where(a => a.StartsWith('?')))
+{
+    var query = argument[1..];
+    var targets = methods.Where(pair => (pair.Value.DeclaringType.Name + "." + pair.Value.Name).Equals(query)).ToArray();
+    foreach (var (targetAddress, targetMethod) in targets)
+    {
+        Console.WriteLine($"Callers of {targetMethod.FullName} @ {targetAddress:X}");
+        foreach (var (callerAddress, callerMethod) in methods)
+        {
+            var next = addresses.FirstOrDefault(x => x > callerAddress);
+            var callerRva = callerAddress >= baseAddress ? callerAddress - baseAddress : callerAddress;
+            var callerLength = (int)Math.Min(next > callerAddress ? next - callerAddress : 1024, 40000);
+            var callerBytes = pe.GetSectionData((int)callerRva).GetContent(0, callerLength).ToArray();
+            var callerDecoder = Decoder.Create(64, new ByteArrayCodeReader(callerBytes));
+            callerDecoder.IP = callerAddress;
+            while (callerDecoder.IP < callerAddress + (ulong)callerBytes.Length)
+            {
+                var instruction = callerDecoder.Decode();
+                if (instruction.NearBranchTarget != targetAddress) continue;
+                Console.WriteLine($"  {callerMethod.FullName} @ {instruction.IP:X}");
+            }
+        }
+    }
+}
 foreach (var argument in args.Where(a => a.StartsWith('#')))
 {
     var address = Convert.ToInt32(argument[1..], 16);
