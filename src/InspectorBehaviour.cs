@@ -204,8 +204,10 @@ public sealed class InspectorBehaviour : MonoBehaviour
         if (_exGaugeHudObject != null) Object.Destroy(_exGaugeHudObject);
 
         var rt = Rect("ATK Inspector EX Gain", exValueText.rectTransform);
-        rt.anchorMin = rt.anchorMax = new Vector2(.5f, 1);
-        rt.pivot = new Vector2(.5f, 0);
+        // Keep the panel's right edge on the native EX number's right edge.
+        // The fixed-width panel therefore grows leftward without covering PLAYER.
+        rt.anchorMin = rt.anchorMax = Vector2.one;
+        rt.pivot = new Vector2(1, 0);
         rt.anchoredPosition = new Vector2(0, 6);
         rt.sizeDelta = new Vector2(560, 36);
         var background = rt.gameObject.AddComponent<Image>();
@@ -215,13 +217,13 @@ public sealed class InspectorBehaviour : MonoBehaviour
         var labelRt = Rect("Label", rt);
         Fill(labelRt);
         labelRt.offsetMin = new Vector2(10, 2);
-        labelRt.offsetMax = new Vector2(-10, -2);
+        labelRt.offsetMax = new Vector2(0, -2);
         var label = labelRt.gameObject.AddComponent<Text>();
         label.font = exValueText.font;
         label.fontSize = Mathf.Max(15, Mathf.RoundToInt(exValueText.fontSize * .62f));
         label.fontStyle = FontStyle.Bold;
         label.color = Color.white;
-        label.alignment = TextAnchor.MiddleCenter;
+        label.alignment = TextAnchor.MiddleRight;
         label.supportRichText = true;
         label.horizontalOverflow = HorizontalWrapMode.Overflow;
         label.verticalOverflow = VerticalWrapMode.Overflow;
