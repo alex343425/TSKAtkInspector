@@ -23,6 +23,7 @@ public sealed class InspectorBehaviour : MonoBehaviour
     private Font? _font;
     private Text? _criticalHudText;
     private Text? _exGaugeHudText;
+    private RectTransform? _exGaugeHudRect;
     private IntPtr _exGaugeValueText;
     private Text? _title, _summary, _details, _modeLabel, _hint, _enemyTargetTitle;
     private Image? _attackTabImage, _criticalTabImage, _enemyTabImage;
@@ -63,6 +64,7 @@ public sealed class InspectorBehaviour : MonoBehaviour
         _instance._exGaugeHudObject = null;
         _instance._criticalHudText = null;
         _instance._exGaugeHudText = null;
+        _instance._exGaugeHudRect = null;
         _instance._exGaugeValueText = IntPtr.Zero;
         _instance._hitText = IntPtr.Zero;
         _instance._hitAction = null;
@@ -237,6 +239,7 @@ public sealed class InspectorBehaviour : MonoBehaviour
 
         _exGaugeHudObject = rt.gameObject;
         _exGaugeHudText = label;
+        _exGaugeHudRect = rt;
         _exGaugeValueText = exValueText.Pointer;
         RefreshInlineExGauge();
     }
@@ -249,6 +252,14 @@ public sealed class InspectorBehaviour : MonoBehaviour
         _exGaugeHudText.text = Presentation.InlineExGaugeSummary(status.BaseRate,
             status.BattleRate, status.NormalGain, status.ChargeGain,
             status.HasBattleRateEffect, status.IsCharge);
+        if (_exGaugeHudRect != null)
+        {
+            // The right edge stays pinned to the native EX number. Only the left
+            // edge moves as the visible summary becomes longer or shorter.
+            _exGaugeHudRect.sizeDelta = new Vector2(
+                Mathf.Ceil(_exGaugeHudText.preferredWidth) + 10,
+                _exGaugeHudRect.sizeDelta.y);
+        }
     }
 
     [HideFromIl2Cpp]

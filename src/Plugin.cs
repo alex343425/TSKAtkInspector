@@ -5,7 +5,7 @@ using HarmonyLib;
 
 namespace TSKAtkInspector;
 
-[BepInPlugin("local.tsk.atkinspector", "TSK ATK Inspector", "1.8.1")]
+[BepInPlugin("local.tsk.atkinspector", "TSK ATK Inspector", "1.8.2")]
 public sealed class Plugin : BasePlugin
 {
     internal static ManualLogSource Logger = null!;
@@ -14,7 +14,7 @@ public sealed class Plugin : BasePlugin
         Logger = Log;
         AddComponent<InspectorBehaviour>();
         new Harmony("local.tsk.atkinspector").PatchAll(typeof(Plugin).Assembly);
-        Log.LogInfo("ATK Inspector 1.8.1 loaded. Standby shows Cri/CriDmg and right-aligned live EX gain; enemy E/F badges flip below at 16 note CT; timeline icons show full CT. Read-only battle data.");
+        Log.LogInfo("ATK Inspector 1.8.2 loaded. Standby shows Cri/CriDmg and auto-sized live EX gain; enemy E/F badges flip below at 16 note CT; timeline icons show full CT. Read-only battle data.");
     }
 }
 
