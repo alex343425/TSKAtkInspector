@@ -103,14 +103,20 @@ Check(Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("
     "normal EX gain is highlighted while the actor is not charging");
 Check(Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, true).Contains("<b>94</b>"),
     "Charge EX gain is highlighted while the actor is charging");
-Check(Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, false, true)
-      .StartsWith("(萎縮) EX上昇 100 (80 / 300) - 通常 ") &&
-      Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, false, true).Contains("<b>37</b>"),
-    "Atrophy label appears at the left edge with the reduced normal gain highlighted");
-Check(Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, true, true).Contains("<b>47</b>"),
+Check(Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, false, true, .5)
+      .StartsWith("(萎縮 -50%) EX上昇 100 (80 / 300) - 通常 ") &&
+      Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, false, true, .5).Contains("<b>37</b>"),
+    "effective Atrophy reduction rate appears at the left edge with the reduced normal gain highlighted");
+Check(Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, true, true, .5).Contains("<b>47</b>"),
     "Atrophy retains the Charge-state highlight on the reduced gain");
-Check(!Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("(萎縮)"),
+Check(!Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("(萎縮"),
     "Atrophy label disappears when the actor is no longer affected");
+Check(Presentation.InlineExGaugeSummary(100, 0, 47, 58, false, false, true, .125)
+      .StartsWith("(萎縮 -12.5%) EX上昇 100 - 通常 "),
+    "Atrophy reduction label preserves fractional percentages");
+Check(Presentation.InlineExGaugeSummary(100, 0, 54, 67, false, false, true, 0)
+      .StartsWith("(萎縮 0%) "),
+    "zero-strength Atrophy remains visible without inventing a reduction");
 foreach (var name in new[] { "Target", "Purgatory", "Collapse", "Stigmata", "ExtremelyCold", "DemonicHindrance",
     "Electrification", "Crushing", "Laceration", "ReserveDark", "Domination", "Refereeing", "Chaos" })
     Check(EnemyDebuffMath.IsNamedDebuff(name), "named debuff category includes " + name);

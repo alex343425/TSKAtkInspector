@@ -251,7 +251,7 @@ public sealed class InspectorBehaviour : MonoBehaviour
         var status = BattleReader.CurrentExGauge(_leader.noteData);
         _exGaugeHudText.text = Presentation.InlineExGaugeSummary(status.BaseRate,
             status.BattleRate, status.NormalGain, status.ChargeGain,
-            status.HasBattleRateEffect, status.IsCharge, status.HasAtrophy);
+            status.HasBattleRateEffect, status.IsCharge, status.HasAtrophy, status.AtrophyReductionRate);
         if (_exGaugeHudRect != null)
         {
             // The right edge stays pinned to the native EX number. Only the left

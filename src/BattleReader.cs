@@ -11,7 +11,7 @@ internal readonly record struct EnemyDamageRates(
     int CollapseCount, int DominationLevel, int NamedCount, int ApplicableNamedCount);
 internal readonly record struct ExGaugeStatus(
     int BaseRate, int BattleRate, int CurrentRate, int NormalGain, int ChargeGain,
-    bool HasBattleRateEffect, bool IsCharge, bool HasAtrophy);
+    bool HasBattleRateEffect, bool IsCharge, bool HasAtrophy, double AtrophyReductionRate);
 
 internal static class BattleReader
 {
@@ -82,15 +82,17 @@ internal static class BattleReader
         int currentRate = ExGaugeMath.CurrentRate(baseRate, battleRate);
         int normalGain = ExGaugeMath.Gain(currentRate, false);
         int chargeGain = ExGaugeMath.Gain(currentRate, true);
+        double atrophyReductionRate = 0;
         if (hasAtrophy)
         {
             int rateFraction = CommonConstants.BattleCorrectionRateFraction;
             normalGain = ExGaugeMath.ApplyAtrophy(normalGain, atrophyRate, rateFraction);
             chargeGain = ExGaugeMath.ApplyAtrophy(chargeGain, atrophyRate, rateFraction);
+            atrophyReductionRate = (double)atrophyRate / rateFraction;
         }
         return new ExGaugeStatus(baseRate, battleRate, currentRate,
             normalGain, chargeGain,
-            hasBattleRateEffect, note.isCharge || note.isSuperCharge, hasAtrophy);
+            hasBattleRateEffect, note.isCharge || note.isSuperCharge, hasAtrophy, atrophyReductionRate);
     }
 
     internal static EnemyDamageRates CurrentEnemyDamageRates(TSKBattleNote attacker, TSKBattleNote target)
