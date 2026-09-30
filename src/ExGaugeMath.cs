@@ -42,4 +42,14 @@ internal static class ExGaugeMath
         long result = (numerator + denominator - 1) / denominator;
         return result >= int.MaxValue ? int.MaxValue : (int)result;
     }
+
+    // SendAddTeamExGauge deducts a separately rounded loss from the already
+    // rounded gain. Match its single-precision rate and product as well.
+    internal static int ApplyAtrophy(int gain, int reductionRate, int rateFraction)
+    {
+        if (rateFraction <= 0) throw new ArgumentOutOfRangeException(nameof(rateFraction));
+        float rate = (float)((double)reductionRate / rateFraction);
+        float loss = MathF.Ceiling(rate * gain);
+        return (int)Math.Clamp((double)gain - loss, 0, int.MaxValue);
+    }
 }

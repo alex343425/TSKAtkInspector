@@ -207,7 +207,7 @@ public sealed class InspectorBehaviour : MonoBehaviour
 
         var rt = Rect("ATK Inspector EX Gain", exValueText.rectTransform);
         // Keep the panel's right edge on the native EX number's right edge.
-        // The fixed-width panel therefore grows leftward without covering PLAYER.
+        // The content-sized panel therefore grows leftward without covering PLAYER.
         rt.anchorMin = rt.anchorMax = Vector2.one;
         rt.pivot = new Vector2(1, 0);
         rt.anchoredPosition = new Vector2(0, 6);
@@ -251,7 +251,7 @@ public sealed class InspectorBehaviour : MonoBehaviour
         var status = BattleReader.CurrentExGauge(_leader.noteData);
         _exGaugeHudText.text = Presentation.InlineExGaugeSummary(status.BaseRate,
             status.BattleRate, status.NormalGain, status.ChargeGain,
-            status.HasBattleRateEffect, status.IsCharge);
+            status.HasBattleRateEffect, status.IsCharge, status.HasAtrophy);
         if (_exGaugeHudRect != null)
         {
             // The right edge stays pinned to the native EX number. Only the left

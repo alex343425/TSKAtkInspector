@@ -80,6 +80,21 @@ Check(ExGaugeMath.Gain(0, false) == 27 && ExGaugeMath.Gain(0, true) == 34,
     "base normal and Charge EX gains round upward");
 Check(ExGaugeMath.Gain(100, false) == 54 && ExGaugeMath.Gain(100, true) == 67,
     "boosted normal and Charge EX gains round upward");
+Check(ExGaugeMath.ApplyAtrophy(ExGaugeMath.Gain(180, false), 5000, 10000) == 37 &&
+      ExGaugeMath.ApplyAtrophy(ExGaugeMath.Gain(180, true), 5000, 10000) == 47,
+    "Atrophy reduces normal and Charge gain after the original gain is rounded");
+Check(ExGaugeMath.ApplyAtrophy(27, 5000, 10000) == 13 &&
+      ExGaugeMath.ApplyAtrophy(67, 5000, 10000) == 33,
+    "Atrophy rounds the deducted loss up rather than rounding the remaining gain up");
+Check(ExGaugeMath.ApplyAtrophy(54, 2500, 10000) == 40,
+    "Atrophy uses the actual effect rate instead of a fixed half-gain assumption");
+Check(ExGaugeMath.ApplyAtrophy(75, 50, 100) == 37,
+    "Atrophy respects the rate fraction read from the game");
+Check(ExGaugeMath.ApplyAtrophy(75, 0, 10000) == 75,
+    "zero-strength Atrophy retains the gain");
+Check(ExGaugeMath.ApplyAtrophy(75, 10000, 10000) == 0 &&
+      ExGaugeMath.ApplyAtrophy(75, 15000, 10000) == 0,
+    "Atrophy cannot reduce EX recovery below zero");
 Check(!Presentation.InlineExGaugeSummary(100, 0, 54, 67, false, false).Contains("/ 300"),
     "EX HUD omits the battle modifier when no effect is active");
 Check(Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("EX上昇 100 (80 / 300)") &&
@@ -88,6 +103,14 @@ Check(Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("
     "normal EX gain is highlighted while the actor is not charging");
 Check(Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, true).Contains("<b>94</b>"),
     "Charge EX gain is highlighted while the actor is charging");
+Check(Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, false, true)
+      .StartsWith("(萎縮) EX上昇 100 (80 / 300) - 通常 ") &&
+      Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, false, true).Contains("<b>37</b>"),
+    "Atrophy label appears at the left edge with the reduced normal gain highlighted");
+Check(Presentation.InlineExGaugeSummary(100, 80, 37, 47, true, true, true).Contains("<b>47</b>"),
+    "Atrophy retains the Charge-state highlight on the reduced gain");
+Check(!Presentation.InlineExGaugeSummary(100, 80, 75, 94, true, false).Contains("(萎縮)"),
+    "Atrophy label disappears when the actor is no longer affected");
 foreach (var name in new[] { "Target", "Purgatory", "Collapse", "Stigmata", "ExtremelyCold", "DemonicHindrance",
     "Electrification", "Crushing", "Laceration", "ReserveDark", "Domination", "Refereeing", "Chaos" })
     Check(EnemyDebuffMath.IsNamedDebuff(name), "named debuff category includes " + name);
@@ -144,6 +167,8 @@ foreach (var name in new[] { "ExecuteActiveSkill", "ExecuteSupportSkill", "Execu
         "Sister source hook is unambiguous: TSKBattleSisterUnit." + name);
 var skillDataType = game.GetType("TSKBattleSkillData");
 var skillType = game.GetType("TSKBattleSkillData/SkillType");
+Check(skillType != null && skillType.Fields.Any(f => f.Name == "Atrophy" && f.HasConstant),
+    "installed game contains the Atrophy status used for EX recovery");
 foreach (var name in new[] { "CriticalDamageUp", "CriticalDamageUpSister", "SisterCriticalDamageUpRush",
     "CriticalDamageUpDesignateSkill", "CriticalDamageUpRushRate", "CriticalDamageUpAttributeOrAttackType" })
     Check(skillType != null && skillType.Fields.Any(f => f.Name == name && f.HasConstant),

@@ -11,7 +11,7 @@ internal readonly record struct EnemyDamageRates(
     int CollapseCount, int DominationLevel, int NamedCount, int ApplicableNamedCount);
 internal readonly record struct ExGaugeStatus(
     int BaseRate, int BattleRate, int CurrentRate, int NormalGain, int ChargeGain,
-    bool HasBattleRateEffect, bool IsCharge);
+    bool HasBattleRateEffect, bool IsCharge, bool HasAtrophy);
 
 internal static class BattleReader
 {
@@ -56,11 +56,22 @@ internal static class BattleReader
         int baseRate = note.GetBaseExGaugeRate();
         long rawBattleRate = 0;
         bool hasBattleRateEffect = false;
+        int atrophyRate = 0;
+        bool hasAtrophy = false;
         var effects = note.SkillEffectList;
         if (effects != null) for (int i = 0; i < effects.Count; i++)
         {
             var effect = effects[i];
             string typeName = effect.Type.ToString();
+            if (typeName == "Atrophy")
+            {
+                // The native transfer chooses the greatest SkillValue1, rather
+                // than stacking reductions or reading SkillEffectValue.
+                if (!hasAtrophy || effect.SkillValue1 > atrophyRate)
+                    atrophyRate = effect.SkillValue1;
+                hasAtrophy = true;
+                continue;
+            }
             if (!ExGaugeMath.IsBattleRateEffect(typeName)) continue;
             hasBattleRateEffect = true;
             rawBattleRate += ExGaugeMath.BattleRateValue(typeName,
@@ -69,9 +80,17 @@ internal static class BattleReader
 
         int battleRate = ExGaugeMath.AppliedBattleRate(rawBattleRate);
         int currentRate = ExGaugeMath.CurrentRate(baseRate, battleRate);
+        int normalGain = ExGaugeMath.Gain(currentRate, false);
+        int chargeGain = ExGaugeMath.Gain(currentRate, true);
+        if (hasAtrophy)
+        {
+            int rateFraction = CommonConstants.BattleCorrectionRateFraction;
+            normalGain = ExGaugeMath.ApplyAtrophy(normalGain, atrophyRate, rateFraction);
+            chargeGain = ExGaugeMath.ApplyAtrophy(chargeGain, atrophyRate, rateFraction);
+        }
         return new ExGaugeStatus(baseRate, battleRate, currentRate,
-            ExGaugeMath.Gain(currentRate, false), ExGaugeMath.Gain(currentRate, true),
-            hasBattleRateEffect, note.isCharge || note.isSuperCharge);
+            normalGain, chargeGain,
+            hasBattleRateEffect, note.isCharge || note.isSuperCharge, hasAtrophy);
     }
 
     internal static EnemyDamageRates CurrentEnemyDamageRates(TSKBattleNote attacker, TSKBattleNote target)
